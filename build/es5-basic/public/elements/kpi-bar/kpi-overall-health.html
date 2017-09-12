@@ -1,0 +1,25 @@
+<!-- import polymer --><link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<!-- import page level css -->
+<link rel="import" href="kpi-overall-health-styles.html">
+
+<dom-module id="kpi-overall-health">
+  <template>
+    <style include="kpi-overall-health-styles"></style>
+    <div class="kpi-overall-health-wrapper">
+      <div class="kpi-overall-health-label">[[label]]</div>
+      <div class="kpi-overall-health-value-units">
+        <div class="kpi-ovarall-health-value">[[percentage]]</div>
+        <div class="kpi-bar-meter-wrapper">
+          <template is="dom-repeat" items="[[bars]]">
+            <div class="kpi-bar-meter-bar-wrapper">
+              <div class="kpi-bar-meter-bar-content" style="width: [[item.width]]%">
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </template>
+  <script>Polymer({is:'kpi-overall-health',properties:{label:{type:String,value:''},bars:[],percentage:{type:Number,observer:'percentChanged'}},ready:function(){},percentChanged:function(){for(var b=20*(this.percentage/100),c=Math.floor(b),d=b%5/5,e=20-c-Math.ceil(d),f=[],g=0;g<c;g++)f.push({width:'100'});0<d&&f.push({width:100*d+''});for(var h=0;h<e;h++)f.push({width:'0'});this.bars=f}});</script>
+</dom-module>

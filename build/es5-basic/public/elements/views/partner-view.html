@@ -1,0 +1,39 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../bower_components/px-dropdown/px-dropdown.html">
+<link rel="import" href="../asset-browser/asset-browser.html">
+<link rel="import" href="../seed-table/seed-table.html">
+<link rel="import" href="../kpi-bar/kpi-bar.html">
+
+<dom-module id="rmd-view">
+  <style>
+     :host {
+      --px-data-table-padding-top: 0px;
+    }
+  </style>
+  <template>
+    <asset-browser id="assetBrowser" asset-model="{{rmdAssetModel}}" opened-asset="{{openedAsset}}" asset-query-url="/api/predix-asset/asset" asset-group-query-url="/api/predix-asset/group">
+    </asset-browser>
+
+    <kpi-bar datapoints="[[kpiDatapoints]]" overall-label="[[kpiOverallLabel]]" overall-value="[[kpiOverallValue]]" overall-max="[[kpiOverallMax]]" kpi-bar-wrapper-state="[[kpiBarWrapperState]]">
+    </kpi-bar>
+    <iron-ajax id="kpiBarAjaxEl"></iron-ajax>
+
+    <!-- If the RMD datasource is not enabled, you can pass in an asset directly. -->
+    <!--<seed-table asset-data="{{openedAsset}}" show-asset-only="true"></seed-table>-->
+
+    <!-- If RMD datasource is enabled, call that and pass data to the table. -->
+    <seed-table id="seedTable" rmd-data="{{rmdTableData}}"></seed-table>
+    <iron-ajax id="datatableAjaxEl"></iron-ajax>
+
+    <timeseries-chart id="tsChart" ws-url="[[wsUrl]]" tags="{{displayTags}}" hidden$="{{!showTimeseriesChart}}"></timeseries-chart>
+
+    <px-dropdown id="refreshFrequencyDropdown" display-value="Refresh Frequency" style="position: absolute; top: 18px; right: 50px; padding-right: 5px" items="[{&quot;key&quot;:&quot;0&quot;,&quot;val&quot;:&quot;No Refresh&quot;},{&quot;key&quot;:&quot;3&quot;,&quot;val&quot;:&quot;Every 3 sec&quot;},{&quot;key&quot;:&quot;15&quot;,&quot;val&quot;:&quot;Every 15 sec&quot;},{&quot;key&quot;:&quot;60&quot;,&quot;val&quot;:&quot;Every 60 sec&quot;}]">
+    </px-dropdown>
+
+    <div id="refreshTableBtn" style="text-align: center; line-height: 26px; width: 28px; height: 28px; position: absolute; top: 18px; right: 20px;">
+      <px-icon icon="px-nav:reload"></px-icon>
+    </div>
+  </template>
+  <script>Polymer({is:'rmd-view',properties:{rmdAssetModel:{type:Object,observer:'_assetModelChanged'},openedAsset:{type:Object,observer:'_openedAssetChanged'},rmdTableData:{type:Object},displayTags:{type:Array},showTimeseriesChart:{type:Boolean,value:!1},wsUrl:{type:String},kpiBarWrapperState:{type:String}},_formatTagsForDisplay:function(b){var c=[];return Object.keys(b).forEach(function(d){var e={key:b[d].timeseriesDatasource.tag,val:b[d].label,unit:'psi'};-1<e.key.indexOf('Temperature')?e.unit='F':-1<e.key.indexOf('Ratio')?e.unit='':-1<e.key.indexOf('Velocity')&&(e.unit='m/s'),c.push(e)}),c},_openedAssetChanged:function(b){console.log('asset opened:',b),this.$.datatableAjaxEl.url='/api/datagrid'+b.uri,this.$.kpiBarAjaxEl.url=this.$.datatableAjaxEl.url+'/summary',this.$.datatableAjaxEl.generateRequest(),b.assetTag&&(this.displayTags=this._formatTagsForDisplay(b.assetTag)),this.showTimeseriesChart=0<=b.uri.indexOf('asset')},_assetModelChanged:function(b){console.log('asset model changed:',b)},_loadFragment:function(b,c){Polymer.isInstance(this.$[b])||Polymer.Base.importHref(c,null,function(){console.log('failed to load:',c)},!0)},ready:function(){this._loadFragment('tsChart','/elements/timeseries-chart/timeseries-chart.html');var b=this;this.refreshTimerInterval=0,this.wsUrl=document.querySelector('#view').elementData.wsUrl,this.$.assetBrowser.addEventListener('px-app-asset-selected',function(c){console.log('evt',c),this.openedAsset=c.detail.item}.bind(this)),this.$.kpiBarAjaxEl.addEventListener('response',function(c){var d=c.detail.response;Array.isArray(d)&&(d=d[0]);var e=d.kpis,f=d.overall;this.kpiDatapoints=e,this.kpiOverallLabel=f.title,this.kpiOverallValue=f.percentage,this.kpiOverallMax='100',this.kpiBarWrapperState='kpi-bar-wrapper-datareceived'}.bind(this)),this.$.datatableAjaxEl.addEventListener('response',function(c){this.rmdTableData=c.detail.response,this.$.kpiBarWrapperState='kpi-bar-wrapper-waiting',this.$.kpiBarAjaxEl.generateRequest()}.bind(this)),this.$.refreshTableBtn.addEventListener('click',function(){console.log('sending request for rmdData'),b.$.datatableAjaxEl.generateRequest()}),this.$.refreshFrequencyDropdown.addEventListener('px-dropdown-selection-changed',function(c){var d=0;switch(c.detail.key){case'3':d=3e3;break;case'15':d=15000;break;case'60':d=6e4;}clearInterval(b.refreshTimerInterval),b.refreshTimerInterval=0===d?0:setInterval(function(){console.log('sending request for rmdData'),b.$.datatableAjaxEl.generateRequest()},d)})}});</script>
+</dom-module>

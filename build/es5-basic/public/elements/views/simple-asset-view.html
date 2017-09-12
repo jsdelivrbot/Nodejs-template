@@ -1,0 +1,28 @@
+<dom-module id="simple-asset-view">
+  <template>
+
+    <px-card header-text="Asset Details" icon="px-nav:hierarchy">
+      <h3>{{assetDescription}}</h3>
+      <px-data-table table-data="{{assetTableData}}">
+      </px-data-table>
+      <!-- Choose one of these iron-ajax elements to load data from the source of your choice. -->
+
+      <!-- First option loads sample data from a json file in the server/sample-data directory. -->
+      <!-- mock-asset-service -->
+      <iron-ajax url="/mock-api/predix-asset/asset?filter=group=/group/plant-richmond-refinery" id="assetQueryElement" last-response="{{rawAssetData}}" auto=""></iron-ajax>
+      <!-- end mock-asset-service -->
+
+      <!-- Second option loads compressor data from Predix Time Series directly.
+            You can use this option if you used the fast install script. -->
+      <!-- real-asset-service
+      <iron-ajax url="/predix-api/predix-asset/asset/compressor-2017" id="assetQueryElement" last-response="{{rawAssetData}}" auto></iron-ajax>
+      end real-asset-service -->
+
+      <!-- Third option loads jet engine data from Predix Time Series directly.
+            You can use this option if you inserted jet engine data using the Predix Toolkit -->
+      <!-- <iron-ajax url="/predix-api/predix-asset/engine" id="assetQueryElement" last-response="{{rawAssetData}}" auto></iron-ajax> -->
+
+    </px-card>
+  </template>
+  <script>Polymer({is:'simple-asset-view',properties:{tsChartData:{type:Array},rawAssetData:{type:Object,observer:'_formatDataForTable'},assetTableData:{type:Object},assetDescription:{type:String}},_formatDataForTable:function(b){b[0].assetTag?this._formatAssetTagsForTable(b):this._formatEngineDataForTable(b)},_formatAssetTagsForTable:function(b){var c,d=[],e=b[0].assetTag;for(var f in e)e.hasOwnProperty(f)&&(c=e[f],delete c.complexType,delete c.edgeDatasource,delete c.timeseriesDatasource,d.push(c));this.assetTableData=d,this.assetDescription=b[0].description+': '+b[0].assetId},_formatEngineDataForTable:function(b){b.forEach(function(c){c.partUri=c.jetEnginePart.uri,c.partSerialNo=c.jetEnginePart.sNo,delete c.jetEnginePart}),this.assetTableData=b,this.assetDescription='Jet Engines'}});</script>
+</dom-module>
